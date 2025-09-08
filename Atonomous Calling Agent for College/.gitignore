@@ -2,3 +2,6 @@
 venv/
 __pycache__/
 *.pyc
+
+# Ignore .env
+Atonomous Calling Agent for College/.env

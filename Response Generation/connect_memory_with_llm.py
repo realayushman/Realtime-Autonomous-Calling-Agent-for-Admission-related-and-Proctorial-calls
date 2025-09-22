@@ -62,7 +62,7 @@ print("RESULT:", response["result"])
 
 from utils import load_llm, CUSTOM_PROMPT_TEMPLATE, get_vectorstore, set_custom_prompt
 
-GROQ_MODEL = "openai/gpt-oss-20b"  # or "llama3-8b-8192"
+GROQ_MODEL = "llama3-8b-8192"  # or "llama3-8b-8192"
 
 # Set up prompt
 prompt = set_custom_prompt(CUSTOM_PROMPT_TEMPLATE)

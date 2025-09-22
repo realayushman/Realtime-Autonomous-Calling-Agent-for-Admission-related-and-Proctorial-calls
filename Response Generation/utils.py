@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-
+import functools
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
@@ -51,6 +51,7 @@ def set_custom_prompt(custom_prompt_template):
     prompt = PromptTemplate(template=custom_prompt_template, input_variables=["context", "question"])
     return prompt
 
+@functools.lru_cache(maxsize=1)
 def get_vectorstore():
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     db = FAISS.load_local(DB_FAISS_PATH, embedding_model, allow_dangerous_deserialization=True)

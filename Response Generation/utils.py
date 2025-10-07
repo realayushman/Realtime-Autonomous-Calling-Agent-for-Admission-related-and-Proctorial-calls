@@ -13,16 +13,16 @@ load_dotenv()
 DB_FAISS_PATH = "vectorstore/db_faiss"
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
+@functools.lru_cache(maxsize=1)
 def load_llm(model_name):
-    llm = ChatGroq(
+    return ChatGroq(
         groq_api_key=GROQ_API_KEY,
         model_name=model_name,
-        temperature=1,
+        temperature=0.7,
         max_tokens=512
     )
-    return llm
 
-CUSTOM_PROMPT_TEMPLATE = """
+CUSTOM_PROMPT_TEMPLATE =  """
 You are an AI assistant representing MIT.  
 
 Use only the information provided in the context to answer the user’s question.  
@@ -39,14 +39,15 @@ Your answers must be:
 - Detailed yet concise  
 - Professional in tone, reflecting MIT’s standards  
 - Focused and direct (no unnecessary small talk)  
-- End with a polite, engaging question to encourage further interaction  
-
+- End with a polite, engaging follow up to encourage further interaction  
+keep your answers under 200 words.
 Context: {context}  
 Question: {question}  
 
 Begin your answer now.
 
 """
+
 def set_custom_prompt(custom_prompt_template):
     prompt = PromptTemplate(template=custom_prompt_template, input_variables=["context", "question"])
     return prompt

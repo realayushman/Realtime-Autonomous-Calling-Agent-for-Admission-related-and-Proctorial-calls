@@ -3,11 +3,21 @@ import streamlit as st
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
 from utils import get_vectorstore, set_custom_prompt, load_llm, CUSTOM_PROMPT_TEMPLATE
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.chains import ConversationalRetrievalChain
 load_dotenv()
 
 DB_FAISS_PATH = "vectorstore/db_faiss"
-GROQ_MODEL = "openai/gpt-oss-20b"  
+GROQ_MODEL = "llama-3.3-70b-versatile"  
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+
+
+if 'memory' not in st.session_state:
+    st.session_state.memory = ConversationBufferWindowMemory(
+        k=3,  # small window for speed
+        memory_key="chat_history",
+        return_messages=True
+    )
 
 def main():
     st.title("Ask Chatbot! ⚡")  # Added emoji to indicate speed
@@ -19,12 +29,12 @@ def main():
     
     if 'qa_chain' not in st.session_state:
         with st.spinner("Initializing AI model..."):
-            st.session_state.qa_chain = RetrievalQA.from_chain_type(
+            st.session_state.qa_chain = ConversationalRetrievalChain.from_llm(
                 llm=load_llm(GROQ_MODEL),
-                chain_type="stuff",
-                retriever=st.session_state.vectorstore.as_retriever(search_kwargs={'k': 2}),  # Reduced from 3 to 2
-                return_source_documents=False,  # Disable if not showing sources
-                chain_type_kwargs={'prompt': set_custom_prompt(CUSTOM_PROMPT_TEMPLATE)}
+                retriever=st.session_state.vectorstore.as_retriever(search_kwargs={'k': 2}),
+                memory=st.session_state.memory,
+                return_source_documents=False,
+                combine_docs_chain_kwargs={'prompt': set_custom_prompt(CUSTOM_PROMPT_TEMPLATE)}
             )
 
     if 'messages' not in st.session_state:
@@ -42,8 +52,8 @@ def main():
         # Show loading indicator
         with st.spinner("Thinking..."):
             try:
-                response = st.session_state.qa_chain.invoke({'query': prompt})
-                result = response["result"]
+                response = st.session_state.qa_chain({"question": prompt})
+                result = response["answer"]
 
                 st.chat_message('assistant').markdown(result)
                 st.session_state.messages.append({'role': 'assistant', 'content': result})
